@@ -16,34 +16,26 @@ public:
     auto *buffer = std::allocator_traits<Allocator>::allocate(allocator_, size);
     std::strncpy(buffer, str, size);
 
-    size_ = size;
     str_ = buffer;
+    size_ = size;
   }
 
   template <typename Allocator_>
   basic_string(const basic_string<Char, Traits, Allocator_> &str) {
     if (!str.size())
       return;
-
-    auto *buffer =
-        std::allocator_traits<Allocator>::allocate(allocator_, str.size_);
-    std::strncpy(buffer, str, str.size_);
-
-    size_ = str.size_;
-    str_ = buffer;
+    copy_assign_(str);
   }
 
   template <typename Allocator_>
   basic_string &operator=(const basic_string<Char, Traits, Allocator_> &str) {
-    *this = std::move(basic_string(str));
+    copy_assign_(str);
     return *this;
   }
 
   template <typename Allocator_>
   basic_string(basic_string<Char, Traits, Allocator_> &&str) {
-    str_ = std::move(str.str_);
-    size_ = std::move(str.size_);
-    allocator_ = std::move(str.allocator_);
+    move_assign_(str);
   }
 
   template <typename Allocator_>
@@ -51,10 +43,7 @@ public:
     if (this == std::addressof(str))
       return *this;
 
-    str_ = std::move(str.str_);
-    size_ = std::move(str.size_);
-    allocator_ = std::move(str.allocator_);
-
+    move_assign_(str);
     return *this;
   }
 
@@ -75,6 +64,23 @@ public:
   }
 
 private:
+  template <typename Allocator_>
+  void copy_assign_(const basic_string<Char, Traits, Allocator_> &str) {
+    auto *buffer =
+        std::allocator_traits<Allocator>::allocate(allocator_, str.size_);
+    Traits::move(buffer, str, str.size_);
+
+    str_ = buffer;
+    size_ = str.size_;
+  }
+
+  template <typename Allocator_>
+  void move_assign_(const basic_string<Char, Traits, Allocator_> &str) {
+    str_ = std::move(str.str_);
+    size_ = std::move(str.size_);
+    allocator_ = std::move(str.allocator_);
+  }
+
   Char *str_{nullptr};
   size_type size_{0};
   Allocator allocator_;
