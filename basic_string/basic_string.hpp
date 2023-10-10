@@ -58,6 +58,18 @@ public:
     return *this;
   }
 
+  template <typename Allocator_>
+  bool
+  operator==(const basic_string<Char, Traits, Allocator_> &str) const noexcept {
+    if (size_ != str.size_)
+      return false;
+    for (size_type i = 0; i != size_; ++i) {
+      if (!Traits::eq(str_[i], str.str_[i]))
+        return false;
+    }
+    return true;
+  }
+
   ~basic_string() {
     std::allocator_traits<Allocator>::deallocate(allocator_, str_, size_);
   }
